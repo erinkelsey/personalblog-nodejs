@@ -4,9 +4,9 @@ Example personal blog using Node.js, Express, and EJS (Embedded JavaScript templ
 
 Hosted example:
 
-Home:
+Home: https://hidden-forest-03499.herokuapp.com/
 
-Compose:
+Compose: https://hidden-forest-03499.herokuapp.com/compose
 
 ### Install
 
