@@ -1,6 +1,10 @@
+/**
+ * Setup and initialization.
+ */
 const express = require("express");
 const bodyParser = require("body-parser");
 const ejs = require("ejs");
+const _ = require("lodash");
 
 const homeStartingContent =
   "Lacus vel facilisis volutpat est velit egestas dui id ornare. Semper auctor neque vitae tempus quam. Sit amet cursus sit amet dictum sit amet justo. Viverra tellus in hac habitasse. Imperdiet proin fermentum leo vel orci porta. Donec ultrices tincidunt arcu non sodales neque sodales ut. Mattis molestie a iaculis at erat pellentesque adipiscing. Magnis dis parturient montes nascetur ridiculus mus mauris vitae ultricies. Adipiscing elit ut aliquam purus sit amet luctus venenatis lectus. Ultrices vitae auctor eu augue ut lectus arcu bibendum at. Odio euismod lacinia at quis risus sed vulputate odio ut. Cursus mattis molestie a iaculis at erat pellentesque adipiscing.";
@@ -16,26 +20,83 @@ app.set("view engine", "ejs");
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static("public"));
 
+const posts = [];
+
+/**
+ * GET Method for main route.
+ *
+ * Sends back the home.ejs with context to render the home page.
+ */
 app.get("/", (req, res) => {
-  res.render("home", { startingContent: homeStartingContent });
+  res.render("home", { startingContent: homeStartingContent, posts: posts });
 });
 
+/**
+ * POST method to render a specific post page.
+ *
+ * @param {String} postId the id for the post
+ *
+ * If postId exists in posts, post page is rendered, else
+ * redirected back to home.
+ */
+app.get("/posts/:postId", (req, res) => {
+  const postId = req.params.postId;
+
+  const post = posts.find((post) => post.id == postId);
+
+  if (post) {
+    res.render("post", { post: post });
+  } else {
+    res.redirect("/");
+  }
+});
+
+/**
+ * GET Method for /about route.
+ *
+ * Renders the about page
+ */
 app.get("/about", (req, res) => {
   res.render("about", { startingContent: aboutContent });
 });
 
+/**
+ * GET Method for /contact route.
+ *
+ * Renders the contact page
+ */
 app.get("/contact", (req, res) => {
-  res.render("home", { startingContent: contactContent });
+  res.render("contact", { startingContent: contactContent });
 });
 
+/**
+ * GET Method for /compose route.
+ *
+ * Renders the page to compose a new post.
+ */
 app.get("/compose", (req, res) => {
   res.render("compose");
 });
 
+/**
+ * POST Method for /compose route.
+ *
+ * Saves the new post.
+ * Redirects back to home.
+ */
 app.post("/compose", (req, res) => {
-  console.log(req.body.postTitle);
+  const post = {
+    id: _.kebabCase(_.lowerCase(req.body.postTitle)),
+    title: req.body.postTitle,
+    content: req.body.postBody,
+  };
+  posts.push(post);
+  res.redirect("/");
 });
 
+/**
+ * Start up server to listen on port 3000.
+ */
 app.listen(3000, function () {
   console.log("Server started on port 3000");
 });
