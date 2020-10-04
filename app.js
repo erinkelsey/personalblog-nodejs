@@ -1,10 +1,13 @@
 /**
  * Setup and initialization.
  */
+require("dotenv").config();
+
 const express = require("express");
 const bodyParser = require("body-parser");
 const ejs = require("ejs");
 const _ = require("lodash");
+const mongoose = require("mongoose");
 
 const homeStartingContent =
   "Lacus vel facilisis volutpat est velit egestas dui id ornare. Semper auctor neque vitae tempus quam. Sit amet cursus sit amet dictum sit amet justo. Viverra tellus in hac habitasse. Imperdiet proin fermentum leo vel orci porta. Donec ultrices tincidunt arcu non sodales neque sodales ut. Mattis molestie a iaculis at erat pellentesque adipiscing. Magnis dis parturient montes nascetur ridiculus mus mauris vitae ultricies. Adipiscing elit ut aliquam purus sit amet luctus venenatis lectus. Ultrices vitae auctor eu augue ut lectus arcu bibendum at. Odio euismod lacinia at quis risus sed vulputate odio ut. Cursus mattis molestie a iaculis at erat pellentesque adipiscing.";
@@ -20,7 +23,23 @@ app.set("view engine", "ejs");
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static("public"));
 
-const posts = [];
+/**
+ * MongoDB and mongoose setup, including schema and models
+ * for Post
+ */
+mongoose.connect(process.env.MONGODB_SRV_ADDRESS, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+});
+
+const Post = mongoose.model(
+  "Post",
+  new mongoose.Schema({
+    _id: String,
+    title: String,
+    content: String,
+  })
+);
 
 /**
  * GET Method for main route.
@@ -28,7 +47,14 @@ const posts = [];
  * Sends back the home.ejs with context to render the home page.
  */
 app.get("/", (req, res) => {
-  res.render("home", { startingContent: homeStartingContent, posts: posts });
+  Post.find({}, (err, foundPosts) => {
+    console.log(foundPosts);
+    if (err) console.log(err);
+    res.render("home", {
+      startingContent: homeStartingContent,
+      posts: foundPosts,
+    });
+  });
 });
 
 /**
@@ -40,15 +66,10 @@ app.get("/", (req, res) => {
  * redirected back to home.
  */
 app.get("/posts/:postId", (req, res) => {
-  const postId = req.params.postId;
-
-  const post = posts.find((post) => post.id == postId);
-
-  if (post) {
-    res.render("post", { post: post });
-  } else {
-    res.redirect("/");
-  }
+  Post.findOne({ _id: req.params.postId }, (err, post) => {
+    if (err || !post) res.redirect("/");
+    else res.render("post", { post: post });
+  });
 });
 
 /**
@@ -81,17 +102,18 @@ app.get("/compose", (req, res) => {
 /**
  * POST Method for /compose route.
  *
- * Saves the new post.
- * Redirects back to home.
+ * Saves the new post to the DB.
+ * Redirects back to home, once post is saved.
  */
 app.post("/compose", (req, res) => {
-  const post = {
-    id: _.kebabCase(_.lowerCase(req.body.postTitle)),
+  const post = new Post({
+    _id: _.kebabCase(_.lowerCase(req.body.postTitle)),
     title: req.body.postTitle,
     content: req.body.postBody,
-  };
-  posts.push(post);
-  res.redirect("/");
+  });
+  post.save((err) => {
+    res.redirect("/");
+  });
 });
 
 /**
