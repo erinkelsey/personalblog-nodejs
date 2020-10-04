@@ -1,6 +1,6 @@
 # Personal Blog
 
-Example personal blog using Node.js, Express, and EJS (Embedded JavaScript templates).
+Example personal blog using Node.js, Express, EJS (Embedded JavaScript templates), and MongoDB.
 
 Hosted example:
 
